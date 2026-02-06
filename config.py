@@ -12,7 +12,8 @@ COMPARISON = {"FROM_REF": "rel_1", "TO_REF": "rel_2"}
 
 FILTERS = {
     "EXCLUDE_MERGE_COMMITS": True,
-    "USE_DIFF_FILE_FILTERING": True
+    "USE_DIFF_FILE_FILTERING": True,
+    "EXCLUDED_FILE_EXTENSIONS": [".csv", ".xlsx", ".txt", ".md", ".json", ".xml", ".yaml", ".yml", ".ini", ".conf", ".config", ".log", ".svg", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".pdf", ".doc", ".docx", ".ppt", ".pptx"]
 }
 
 DATABASE = {

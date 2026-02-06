@@ -1,4 +1,7 @@
 import requests, time
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class GitLabAPIClient:
     def __init__(self, cfg):
@@ -13,7 +16,7 @@ class GitLabAPIClient:
         url = f"{self.base_url}{endpoint}"
         for i in range(1, self.retries + 1):
             try:
-                r = self.session.request(method, url, params=params, timeout=self.timeout)
+                r = self.session.request(method, url, params=params, timeout=self.timeout, verify=False)
                 if r.status_code == 429:
                     time.sleep(self.backoff ** i)
                     continue
