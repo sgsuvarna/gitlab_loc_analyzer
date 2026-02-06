@@ -23,8 +23,22 @@ DATABASE = {
     "SERVICE": "",
     "USER": "",
     "PASSWORD": "",
-    "TABLE": "",
-    "COLUMNS": []
+    "STAGING_TABLE": "stg_gitlab_lines_of_code",
+    "TARGET_TABLE": "t_gitlab_lines_of_code",
+    "BATCH_SIZE": 1000,
+    "COLUMNS": [
+        "project",
+        "FromBranch",
+        "ToBranch",
+        "CommitSHA",
+        "Title",
+        "AuthorName",
+        "AuthorEmail",
+        "Date",
+        "LinesAdded",
+        "LinesDeleted",
+        "TotalChanges"
+    ]
 }
 
 EMAIL = {

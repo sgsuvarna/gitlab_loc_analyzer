@@ -71,8 +71,10 @@ def main():
         
         if skipping:
             if project["id"] == resume_after:
-                logger.info(f"Resuming processing at project {idx}/{total_projects}: {project_name} (ID: {project['id']})")
+                logger.info(f"Found checkpoint project {project_name} (ID: {project['id']}). Resuming from next project.")
                 skipping = False
+                skipped_count += 1
+                continue  # Skip the checkpoint project itself - already processed
             else:
                 skipped_count += 1
                 logger.debug(f"Skipping project {idx}/{total_projects}: {project_name} (already processed)")
@@ -108,7 +110,8 @@ def main():
             logger.info(f"Database insert completed: {len(all_rows)} rows")
         except Exception as e:
             logger.error(f"Database insert failed: {str(e)}")
-            raise
+            logger.error("Continuing with error reporting. CSV file was created successfully.")
+            # Don't raise - let the job complete and send error notifications
 
     if CONFIG["EMAIL"]["ENABLED"] and errors.has_errors():
         logger.info("Sending error notification email...")

@@ -1,4 +1,5 @@
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +15,68 @@ def calculate_metrics(api, project, cfg, errors):
             f"/projects/{project['id']}/repository/compare",
             {"from": cfg["COMPARISON"]["FROM_REF"], "to": cfg["COMPARISON"]["TO_REF"]}
         ).get("commits", [])
+    except requests.exceptions.HTTPError as http_err:
+        status_code = http_err.response.status_code
+        
+        # 404 errors are common - branch might not exist in all projects
+        if status_code == 404:
+            logger.warning(
+                f"Branch not found in project {project_name}: "
+                f"One or both branches ('{cfg['COMPARISON']['FROM_REF']}', "
+                f"'{cfg['COMPARISON']['TO_REF']}') do not exist. Skipping project."
+            )
+            errors.add(
+                project_name, 
+                f"Branch not found: {cfg['COMPARISON']['FROM_REF']} or {cfg['COMPARISON']['TO_REF']} does not exist",
+                {
+                    "project_id": project.get("id"),
+                    "from_ref": cfg['COMPARISON']['FROM_REF'],
+                    "to_ref": cfg['COMPARISON']['TO_REF'],
+                    "http_status": 404
+                }
+            )
+            return rows
+        
+        # 403 - permission issues
+        elif status_code == 403:
+            logger.warning(f"Access denied to project {project_name}: Insufficient permissions. Skipping project.")
+            errors.add(
+                project_name,
+                "Access denied: Insufficient permissions to access repository",
+                {"project_id": project.get("id"), "http_status": 403}
+            )
+            return rows
+        
+        # Other HTTP errors
+        else:
+            logger.error(
+                f"HTTP error {status_code} fetching commits for project {project_name}: {str(http_err)}"
+            )
+            errors.add(
+                project_name,
+                f"HTTP error {status_code}: {str(http_err)}",
+                {"project_id": project.get("id"), "http_status": status_code}
+            )
+            return rows
+
+    except requests.exceptions.RequestException as req_err:
+        # Network/timeout errors
+        logger.error(f"Network error fetching commits for project {project_name}: {str(req_err)}")
+        errors.add(
+            project_name,
+            f"Network/timeout error: {str(req_err)}",
+            {"project_id": project.get("id")}
+        )
+        return rows
+
     except Exception as e:
-        logger.error(f"Failed to fetch commits for project {project_name}: {str(e)}")
-        errors.add(project_name, f"Failed to fetch commits: {str(e)}", {"project_id": project.get("id")})
+        # Unexpected errors
+        logger.error(f"Unexpected error fetching commits for project {project_name}: {str(e)}")
+        errors.add(
+            project_name,
+            f"Unexpected error: {str(e)}",
+            {"project_id": project.get("id")}
+        )
         return rows
 
     total_commits = len(commits)
